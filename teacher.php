@@ -124,14 +124,14 @@ ini_set('display_errors', 1);
         foreach($teacherlessons as $teacherlesson){
 
             foreach($lessons as $lesson){
-                if ((int)$lesson === $teacherlesson['lesson_id']){
-                    
+                if (!((int)$lesson === $teacherlesson['lesson_id'])){
+                    associateTeacherLesson((int)$teacherId, (int)$lesson);
                 }
-                associateTeacherLesson((int)$teacherId, (int)$lesson);
-
+                //go to next teacherlesson
         }
             
         }
+        
     }
 
     if($_POST['add']==="t"){
