@@ -1,0 +1,12 @@
+@import url(template.css);
+@import url(edit_bootstrap.css);
+
+a {
+    text-decoration: none;
+    color: var(--grey-color);
+}
+
+a:hover {
+    text-decoration: none;
+    color: var(--grey-color);
+}
