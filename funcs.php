@@ -14,6 +14,7 @@
         foreach($lessons as $lesson){
             associateTeacherLesson((int)$teacherid, (int)$lesson);
         }
+        return header("Location: ".$_SERVER["PHP_SELF"]);
     }
 // Create a new Student
     function createStudent($name, $age, $gender,$lessons)
@@ -30,7 +31,7 @@
         foreach($lessons as $lesson){
             associateStudentLesson((int)$studentid, (int)$lesson);
         }
-        return header($_SERVER["PHP_SELF"]);
+        return header("Location: ".$_SERVER["PHP_SELF"]);
     }
 
     // Create a new Lesson
@@ -50,7 +51,7 @@
         foreach($prerequisites as $prerequisite){
             associateLessonLesson((int)$lessonid,(int)$prerequisite);
         }
-        return header($_SERVER["PHP_SELF"]);
+        return header("Location: ".$_SERVER["PHP_SELF"]);
 
     }
     // Associate a Teacher with a Lesson
@@ -68,7 +69,7 @@
         $stmt->bindParam(':teacher_id', $teacherid);
         $stmt->bindParam(':lesson_id', $lessonid);
         $stmt->execute();
-        return header($_SERVER["PHP_SELF"]);
+        return header("Location: ".$_SERVER["PHP_SELF"]);
 }
     // Associate a Student with a Lesson
     function associateStudentLesson($studentid, $lessonid)
@@ -228,7 +229,7 @@
         $stmt = $connection->prepare($sql);
         $stmt->bindParam(':teacherId', $teacherId);
         $stmt->execute();
-        return header($_SERVER["PHP_SELF"]);
+        return header("Location: ".$_SERVER["PHP_SELF"]);
     }
 
     // Delete a student
@@ -240,8 +241,8 @@
         $stmt = $connection->prepare($sql);
         $stmt->bindParam(':studentId', $studentId);
         $stmt->execute();
-        return header($_SERVER["PHP_SELF"]);
-    }
+        return header("Location: ".$_SERVER["PHP_SELF"]);
+        }
 
     //deleteLesson
     function deleteLesson($lessonId){
@@ -251,8 +252,8 @@
         $stmt = $connection->prepare($sql);
         $stmt->bindParam(':lessonId', $lessonId);
         $stmt->execute();
-        return header($_SERVER["PHP_SELF"]);
-    }
+        return header("Location: ".$_SERVER["PHP_SELF"]);
+        }
     
     // Delete teacher_lessons where teahcer_id is equal to sth
     function deleteTeacherLesson($teacherId){
@@ -325,8 +326,8 @@
             //go to next teacherlesson
         }
         
-        return header($_SERVER["PHP_SELF"]);
-    }
+        return header("Location: ".$_SERVER["PHP_SELF"]);
+        }
 
     // Update a student's information
     function updateStudent($studentId, $name, $age, $gender, $lessons)
@@ -347,8 +348,8 @@
             associateStudentLesson((int)$studentId, (int)$lesson);
             //go to next studentlesson
         }
-        return header($_SERVER["PHP_SELF"]);
-    }
+        return header("Location: ".$_SERVER["PHP_SELF"]);
+        }
 
     // Update a lesson's information
     function updateLesson($lessonId,$name, $prerequisites, $type, $teachers){
@@ -372,8 +373,8 @@
         foreach($prerequisites as $prerequisite){
             associateLessonLesson((int)$lessonId,(int)$prerequisite);
         }
-        return header($_SERVER["PHP_SELF"]);
-    }
+        return header("Location: ".$_SERVER["PHP_SELF"]);
+        }
 
     //deleteLesson
     //updatelesson
