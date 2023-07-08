@@ -44,3 +44,7 @@ function darkMode() {
         $('.main_content .main_navbar .dark_mode_icon .bx-sun').css('display', 'block');
     });
 }
+
+$(document).ready(function() {
+    $('.js-example-basic-multiple').select2();
+});

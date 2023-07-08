@@ -1,6 +1,6 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
     $user = "root";
     $pass = "";
     $host = "localhost";
@@ -12,134 +12,14 @@ ini_set('display_errors', 1);
         die("Error: " . $e->getMessage());
     }
 
-    // Create a new 
-    function create($name, $specialty, $gender,$lessons)
-    {
-        global $connection;
+    include 'funcs.php';
 
-        $sql = "INSERT INTO Teacher (`name`, specialty, gender) VALUES (:name, :specialty, :gender);";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':specialty', $specialty);
-        $stmt->bindParam(':gender', $gender);
-        $stmt->execute();
-        $teacherid = $connection->lastInsertId();
-        foreach($lessons as $lesson){
-            associateTeacherLesson((int)$teacherid, (int)$lesson);
-        }
-}
-    // Create a new Lesson
-    function createLesson($name, $type)
-    {
-        global $connection;
-
-        $sql = "INSERT INTO Lesson (`name`, `type`) VALUES (:name, :type)";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':type', $type);
-        $stmt->execute();
-    }
-    // Associate a  with a Lesson
-    function associateTeacherLesson($teacherid, $lessonid)
-    {
-        global $connection;
-        $teachersforlesson = getteachersforlesson($lessonid);
-        foreach($teachersforlesson as $teacherforlesson){
-            if($teacherforlesson['teacher_id']===$teacherid){
-                return;
-            }
-        }
-        $sql = "INSERT INTO teacher_lesson (teacher_id, lesson_id) VALUES (:teacher_id, :lesson_id)";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':teacher_id', $teacherid);
-        $stmt->bindParam(':lesson_id', $lessonid);
-        $stmt->execute();
-}
-    // Retrieve all Teachers
-    function getAllTeachers()
-    {
-        global $connection;
-
-        $sql = "SELECT * FROM Teacher";
-        $stmt = $connection->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Retrieve all Lessons
-    function getAllLessons()
-    {
-        global $connection;
-
-        $sql = "SELECT * FROM Lesson";
-        $stmt = $connection->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Retrieve all Teacher Lesson
-    function getAllTeacherLesson($teacherId){
-        global $connection;
-        $sql = "SELECT * FROM teacher_lesson WHERE teacher_id = :id";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':id',$teacherId);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Retrieve all teachers for a lesson
-    function getteachersforlesson($lessonid){
-        global $connection;
-        $sql = "SELECT * FROM teacher_lesson WHERE lesson_id = :id";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':id',$lessonid);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Delete a Teacher
-    function deleteTeacher($teacherId)
-    {
-        global $connection;
-
-        $sql = "DELETE FROM Teacher WHERE id = :teacherId";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':teacherId', $teacherId);
-        $stmt->execute();
-    }
-
-    // Update a Teacher's information
-    function updateTeacher($teacherId, $name, $specialty, $gender, $lessons)
-    {
-        global $connection;
-
-        $sql = "UPDATE Teacher SET name = :name, specialty = :specialty, gender = :gender WHERE id = :teacherId";
-        $stmt = $connection->prepare($sql);
-        $stmt->bindParam(':name', $name);
-        $stmt->bindParam(':specialty', $specialty);
-        $stmt->bindParam(':gender', $gender);
-        $stmt->bindParam(':teacherId', $teacherId);
-        $stmt->execute();
-
-        $teacherlessons = getAllTeacherLesson($teacherId);
-
-        foreach($teacherlessons as $teacherlesson){
-
-            foreach($lessons as $lesson){
-                if (!((int)$lesson === $teacherlesson['lesson_id'])){
-                    associateTeacherLesson((int)$teacherId, (int)$lesson);
-                }
-                //go to next teacherlesson
-        }
-            
-        }
-        
-    }
-
-    if($_POST['add']==="t"){
+    if(isset($_POST['add'])){
         $name = $_POST['name'];
         $specialty = $_POST['specialty'];
         $gender = $_POST['gender'];
         $lessons = $_POST['lessons'];
-        create($name,$specialty,$gender,$lessons);
+        createTeacher($name,$specialty,$gender,$lessons);
     }
 
     if(isset($_POST['delete'])){
@@ -163,8 +43,8 @@ ini_set('display_errors', 1);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="main.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <title>School</title>
 </head>
 <body>
@@ -259,7 +139,7 @@ ini_set('display_errors', 1);
                         echo $getlessoninfo[0]['name']."<br>";
                     }
                       
-                    echo '<del><td>';
+                    echo '<del></td>';
                     echo "<td><!-- Button trigger modal -->
                     <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaledit".$teacher['id']."'>
                     Edit
@@ -312,23 +192,25 @@ ini_set('display_errors', 1);
                                         Other
                                     </label>
                                     </div>
-                                    <h3>Lessons:</h3>";
+                                    <h3>Lessons:</h3>
+                                    <select class='js-example-basic-multiple' name='lessons[]' multiple='multiple'>";
                                     
                                     // Retrieve all lessons from the database
                     $lessons = getAllLessons();
                     // Display checkboxes for each lesson
                     foreach ($lessons as $lesson) {
-                        $teachersforlesson = getteachersforlesson($lesson['id']);
-                        echo '<input type="checkbox" name="lessons[]" value="' . $lesson['id'] . '" ';
+                        $teachersforlesson = getTeachersForLesson($lesson['id']);
+                        echo '<option name="lessons[]" value="' . $lesson['id'] . '" ';
                         foreach ($teachersforlesson as $teacherforlesson){
                         // if($teacherforlesson['teacher_id']===$teacher['id']){
-                        echo (($teacherforlesson['teacher_id']===$teacher['id'])?"checked":"");
+                        echo (($teacherforlesson['teacher_id']===$teacher['id'])?"selected":"");
                         // }
                     }
-                        echo '>' . $lesson['name'] . '<br>';
+                        echo '>' . $lesson['name'];
                     }    
                                     
-                                echo "</div>
+                                echo "</select>
+                                </div>
                                 </div>
                             </fieldset>
                             <div class='form-group'>
@@ -369,7 +251,7 @@ ini_set('display_errors', 1);
                     echo "</tr>";
                 }
             } else {
-                    echo "No s found.";
+                    echo "No teachers found.";
                 }
                 
                 echo "</table>";
@@ -429,15 +311,17 @@ ini_set('display_errors', 1);
                 </label>
                 </div>
                 <h3>Lessons:</h3>
+                <select class='js-example-basic-multiple' name='lessons[]' multiple='multiple'>
             <?php
             // Retrieve all lessons from the database
             $lessons = getAllLessons();
 
             // Display checkboxes for each lesson
             foreach ($lessons as $lesson) {
-                echo '<input type="checkbox" name="lessons[]" value="' . $lesson['id'] . '">' . $lesson['name'] . '<br>';
+                echo '<option value="' . $lesson['id'] . '">' . $lesson['name'];
             }
             ?>
+                </select>
             </div>
             </div>
         </fieldset>
@@ -520,10 +404,10 @@ ini_set('display_errors', 1);
             </div> -->
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </body>
 </html>

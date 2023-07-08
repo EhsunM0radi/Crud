@@ -1,71 +1,39 @@
 <?php
-            $user = "root";
-            $pass = "";
-            $host = "localhost";
-            $dbname = "School";
-            try {
-                $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+    $user = "root";
+    $pass = "";
+    $host = "localhost";
+    $dbname = "School";
+    try {
+        $connection = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
+        $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch(PDOException $e) {
+        die("Error: " . $e->getMessage());
+    }
 
-                //Add stu
-                // Prepare the SQL statement for insertion
-                if($_POST['addstu']==='t'){
-                    $sql = "INSERT INTO Student (stuname, stuage, stugender) VALUES (:stuname, :stuage, :stugender)";
-                    $stmt = $conn->prepare($sql);
-                    $stuname = $_POST['stuname'];
-                    $stuage = $_POST['stuage'];
-                    $stugender = $_POST['stugender'];
+    include 'funcs.php';
 
-                    
-                    // Bind the parameter values
-                    $stmt->bindParam(':stuname', $stuname);
-                    $stmt->bindParam(':stuage', $stuage);
-                    $stmt->bindParam(':stugender', $stugender);
-                    
-                    // Execute the statement
-                    $stmt->execute();
-                    
-                    echo "Student created successfully.";
-                    }
-                    
-                    //edit stu
-                    if (isset($_POST['editstu'])) {
-                        // Handle form submission
-                        $stu_id = $_POST['editstu'];
-                        $stuname = $_POST['editstuname'];
-                        $stuage = $_POST['editstuage'];
-                        $stugender = $_POST['editstugender'];
-                        var_dump($stu_id);
-                        // Prepare the SQL statement for update
-                        $sql = "UPDATE Student SET stuname = :stuname, stuage = :stuage, stugender = :stugender WHERE stu_id = :stu_id";
-                        $stmt = $conn->prepare($sql);
+    if(isset($_POST['add'])){
+        $name = $_POST['name'];
+        $age = $_POST['age'];
+        $gender = $_POST['gender'];
+        $lessons = $_POST['lessons'];
+        createStudent($name,$age,$gender,$lessons);
+    }
 
-                        // Bind the parameter values
-            
-                        $params = [':stuname'=> $stuname, ':stuage'=>$stuage,':stugender'=>$stugender,':stu_id'=>$stu_id];
+    if(isset($_POST['delete'])){
+        deleteStudent($_POST['delete']);
+    }
 
-                        // Execute the statement
-                        $stmt->execute($params);
-
-                        echo "Student updated successfully.";
-                    }
-                    
-                    //delete stu
-                    // Prepare and execute the delete statement
-                    if (isset($_POST['deletestu'])){
-                        $stmt = $conn->prepare("DELETE FROM Student WHERE stu_id = :stu_id");
-                        $stmt->bindParam(':stu_id', $_POST['deletestu']);
-                        $stmt->execute();
-                    // Check if any rows were affected
-                    if ($stmt->rowCount() > 0) {
-                        echo "Student deleted successfully.";
-                    } else {
-                        echo "Student not found.";
-                    }
-                }
-            } catch(PDOException $e) {
-                echo "Error: " . $e->getMessage();
-            }
+    if(isset($_POST['edit'])){
+        $id = $_POST['edit'];
+        $name = $_POST['name'];
+        $age = $_POST['age'];
+        $gender = $_POST['gender'];
+        $lessons = $_POST['lessons'];
+        updateStudent($id,$name,$age,$gender,$lessons);
+    }
             $conn = null;
                 
 ?>
@@ -74,13 +42,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="main.css">
     <title>School</title>
 </head>
 <body>
 <div class="container ">
-<?php
+        <?php
         include 'sidebar.php';
         ?>
         <div class="main_content">
@@ -88,7 +57,7 @@
                 <div class="hamburger">
                     <i class='bx bx-menu'></i>
                 </div>
-                <div class="student">
+                <div class="">
                     <div class="profile_img">
                         <img src="https://i.postimg.cc/Sxb6gssQ/img-1.jpg" alt="profile img">
                     </div>
@@ -123,8 +92,8 @@
             </div>
             <div class="tabs">
                 <!-- <div class="tab_name">
-                    <p><a href="index.php">Student</a></p>
-                    <p><a href="teacher.php">Teacher</a></p>
+                    <p><a href="index.php"></a></p>
+                    <p><a href=".php"></a></p>
                     <p><a href="lesson.php">Lesson</a></p>
                 </div> -->
                 <div class="three_dots">
@@ -138,41 +107,53 @@
             $host = "localhost";
             $dbname = "School";
             try {
-                $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $connection = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
+                $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
                 
-                //read stu
+                //read 
                 // Fetch students data
-                $sql = "SELECT * FROM Student";
-                $stmt = $conn->prepare($sql);
-                $stmt->execute();
-                $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $students = getAllStudents();
+
 
                 if (count($students) > 0) {
                     echo "<table>";
-                    echo "<tr><th>name</th><th>id</th><th>age</th><th>gender</th><th>edit</th></tr>";
+                    echo "<tr><th>name</th><th>id</th><th>age</th><th>gender</th><th>lessons</th><th>edit</th></tr>";
 
                 foreach ($students as $student) {
+                    $student_lessons = getAllStudentLesson($student['id']);
+                    // die(var_dump($student_lessons));
                     echo "<tr>";
-                    echo "<td class='profile_name'><img src='https://i.postimg.cc/BvPJ7FHN/img1.jpg' alt='img'>".$student['stuname']."</td>";
-                    echo "<td>".$student['stu_id']."</td>";
-                    echo "<td>".$student['stuage']."</td>";
-                    echo "<td>".$student['stugender']."</td>";
+                    echo "<td class='profile_name'><img src='https://i.postimg.cc/BvPJ7FHN/img1.jpg' alt='img'>".$student['name']."</td>";
+                    echo "<td>".$student['id']."</td>";
+                    echo "<td>".$student['age']."</td>";
+                    echo "<td>".$student['gender']."</td>";
+                    echo '<td>';
+                    foreach($student_lessons as $student_lesson){
+                        $sql2 = "SELECT * FROM Lesson WHERE id = :id";
+                        $stmt2 = $connection->prepare($sql2);
+                        $stmt2->bindParam(':id',$student_lesson['lesson_id']);
+                        $stmt2->execute();
+                        $getlessoninfo = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+                        // die(var_dump($getlessoninfo));
+                        echo $getlessoninfo[0]['name']."<br>";
+                    }
+                      
+                    echo '<del></td>';
                     echo "<td><!-- Button trigger modal -->
-                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaledit".$student['stu_id']."'>
+                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaledit".$student['id']."'>
                     Edit
                     </button> | 
                         <!-- Button trigger modal -->
-                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaldelete".$student['stu_id']."'>
+                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaldelete".$student['id']."'>
                     Delete
                     </button>  
                     <!-- Modal -->
-                      <div class='modal fade' id='modaledit".$student['stu_id']."' tabindex='-1' role='dialog' aria-labelledby='ModalEdit".$student['stu_id']."' aria-hstu_idden='true'>
+                      <div class='modal fade' id='modaledit".$student['id']."' tabindex='-1' role='dialog' aria-labelledby='ModalEdit".$student['id']."' aria-hidden='true'>
                         <div class='modal-dialog' role='document'>
                           <div class='modal-content'>
                             <div class='modal-header'>
-                              <h5 class='modal-title' id='ModalEdit".$student['stu_id']."'>Edit</h5>
+                              <h5 class='modal-title' id='ModalEdit".$student['id']."'>Edit</h5>
                               <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
                                 <span aria-hidden='true'>&times;</span>
                               </button>
@@ -180,43 +161,61 @@
                             </div>
                             <div class='modal-body'>
                             <form method='post' action='".$_SERVER['PHP_SELF']."'>
-                            <input type='hidden' name='editstu' value='".$student['stu_id']."'>
+                            <input type='hidden' name='edit' value='".$student['id']."'>
                             <div class='form-group'>
-                              <label for='editstuname".$student['stu_id']."'>name</label>
-                              <input type='text' class='form-control' name='editstuname' id='editstuname".$student['stu_id']."' placeholder='stuname' value='".$student['stuname']."'>
+                              <label for='editname".$student['id']."'>name</label>
+                              <input type='text' class='form-control' name='name' id='editname".$student['id']."' placeholder='name' value='".$student['name']."'>
                             </div>
                             <div class='form-group'>
-                              <label for='editstuage".$student['stu_id']."'>stuage</label>
-                              <input type='number' class='form-control' name='editstuage' id='editstuage".$student['stu_id']."' placeholder='stuage' value='".$student['stuage']."'>
+                              <label for='editage".$student['id']."'>age</label>
+                              <input type='number' class='form-control' name='age' id='editage".$student['id']."' placeholder='age' value='".$student['age']."'>
                             </div>
                             <fieldset class='form-group'>
                                 <div class='row'>
-                                <legend class='col-form-label col-sm-2 pt-0'>stugender</legend>
+                                <legend class='col-form-label col-sm-2 pt-0'>gender</legend>
                                 <div class='col-sm-10'>
                                     <div class='form-check'>
-                                    <input class='form-check-input' type='radio' name='editstugender' id='editstugendermale".$student['stu_id']."' value='Male' ".($student['stugender']==='Male'?'checked':'').">
-                                    <label class='form-check-label' for='editstugendermale".$student['stu_id']."'>
+                                    <input class='form-check-input' type='radio' name='gender' id='editgendermale".$student['id']."' value='Male' ".($student['gender']==='Male'?'checked':'').">
+                                    <label class='form-check-label' for='editgendermale".$student['id']."'>
                                         Male
                                     </label>
                                     </div>
                                     <div class='form-check'>
-                                    <input class='form-check-input' type='radio' name='editstugender' id='editstugenderfemale".$student['stu_id']."' value='Female' ".($student['stugender']==='Female'?'checked':'').">
-                                    <label class='form-check-label' for='editstugenderfemale".$student['stu_id']."'>
+                                    <input class='form-check-input' type='radio' name='gender' id='editgenderfemale".$student['id']."' value='Female' ".($student['gender']==='Female'?'checked':'').">
+                                    <label class='form-check-label' for='editgenderfemale".$student['id']."'>
                                         Female
                                     </label>
                                     </div>
                                     <div class='form-check disabled'>
-                                    <input class='form-check-input' type='radio' name='editstugender' id='editstugenderbinary".$student['stu_id']."' value='Binary' ".($student['stugender']==='Binary'?'checked':'').">
-                                    <label class='form-check-label' for='editstugenderbinary".$student['stu_id']."'>
-                                        Binary
+                                    <input class='form-check-input' type='radio' name='gender' id='editgenderbinary".$student['id']."' value='Binary' ".($student['gender']==='Binary'?'checked':'').">
+                                    <label class='form-check-label' for='editgenderbinary".$student['id']."'>
+                                        Other
                                     </label>
                                     </div>
+                                    <h3>Lessons:</h3>
+                                    <select class='js-example-basic-multiple' name='lessons[]' multiple='multiple'>";
+                                    
+                                    // Retrieve all lessons from the database
+                    $lessons = getAllLessons();
+                    // Display checkboxes for each lesson
+                    foreach ($lessons as $lesson) {
+                        $studentsforlesson = getStudentsForLesson($lesson['id']);
+                        echo '<option value="' . $lesson['id'] . '" ';
+                        foreach ($studentsforlesson as $studentforlesson){
+                        // if($studentforlesson['student_id']===$student['id']){
+                        echo (($studentforlesson['student_id']===$student['id'])?"selected":"");
+                        // }
+                    }
+                        echo '>' . $lesson['name'];
+                    }    
+                                    
+                                echo "</select>
                                 </div>
                                 </div>
                             </fieldset>
                             <div class='form-group'>
                                 <label for='editimage'>Profile image</label>
-                                <input type='file' class='form-control-file' id='editimage".$student['stu_id']."' name='editimage'>
+                                <input type='file' class='form-control-file' id='editimage".$student['id']."' name='editimage'>
                             </div>
                             <div class='form-group row'>
                                 <div class='col-sm-10'>
@@ -229,19 +228,19 @@
                         </div>
                       </div>
                       <!-- Modal -->
-                      <div class='modal fade' id='modaldelete".$student['stu_id']."' tabindex='-1' role='dialog' aria-labelledby='ModalDelete".$student['stu_id']."' aria-hstu_idden='true'>
+                      <div class='modal fade' id='modaldelete".$student['id']."' tabindex='-1' role='dialog' aria-labelledby='ModalDelete".$student['id']."' aria-hidden='true'>
                         <div class='modal-dialog' role='document'>
                           <div class='modal-content'>
                             <div class='modal-header'>
-                              <h5 class='modal-title' id='ModalDelete".$student['stu_id']."'>Modal title</h5>
+                              <h5 class='modal-title' id='ModalDelete".$student['id']."'>Modal title</h5>
                               <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
                                 <span aria-hidden='true'>&times;</span>
                               </button>
                             </div>
                             <div class='modal-body'>
-                            <h6>Are you sure you want to delete this student?</h6>
+                            <h6>Are you sure you want to delete this ?</h6>
                             <form action='".$_SERVER['PHP_SELF']."' method='POST'>
-                                <input type='hidden' name='deletestu' value='".$student['stu_id']."' >
+                                <input type='hidden' name='delete' value='".$student['id']."' >
                                 <input type='submit' class='btn btn-primary'>
                             </form>
                             </div>
@@ -264,7 +263,7 @@
             </div>
             <!-- Button trigger modal -->
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modaladd">
-  Add Student
+  Add 
 </button>
 
 <!-- Modal -->
@@ -272,7 +271,7 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="Modaladd">Add Student </h5>
+        <h5 class="modal-title" id="Modaladd">Add  </h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -280,50 +279,62 @@
       <div class="modal-body">
         
       <form method='post' action='<?php echo $_SERVER['PHP_SELF'];?>'>
-    <input type='hidden' name='addstu' value='t'>
-    <div class='form-group'>
-      <label for='stuname'>name</label>
-      <input type='text' class='form-control' name='stuname' id='stuname' placeholder='stuname'>
-    </div>
-    <div class='form-group'>
-      <label for='stuage'>stuage</label>
-      <input type='number' class='form-control' name='stuage' id='stuage' placeholder='stuage'>
-    </div>
-    <fieldset class='form-group'>
-        <div class='row'>
-        <legend class='col-form-label col-sm-2 pt-0'>stugender</legend>
-        <div class='col-sm-10'>
-            <div class='form-check'>
-            <input class='form-check-input' type='radio' name='stugender' id='stugendermale' value='Male'>
-            <label class='form-check-label' for='stugendermale'>
-                Male
-            </label>
+        <input type='hidden' name='add' value='t'>
+        <div class='form-group'>
+        <label for='name'>name</label>
+        <input type='text' class='form-control' name='name' id='name' placeholder='name'>
+        </div>
+        <div class='form-group'>
+        <label for='age'>age</label>
+        <input type='number' class='form-control' name='age' id='age' placeholder='age'>
+        </div>
+        <fieldset class='form-group'>
+            <div class='row'>
+            <legend class='col-form-label col-sm-2 pt-0'>gender</legend>
+            <div class='col-sm-10'>
+                <div class='form-check'>
+                <input class='form-check-input' type='radio' name='gender' id='gendermale' value='Male'>
+                <label class='form-check-label' for='gendermale'>
+                    Male
+                </label>
+                </div>
+                <div class='form-check'>
+                <input class='form-check-input' type='radio' name='gender' id='genderfemale"' value='Female'>
+                <label class='form-check-label' for='genderfemale'>
+                    Female
+                </label>
+                </div>
+                <div class='form-check disabled'>
+                <input class='form-check-input' type='radio' name='gender' id='genderbinary' value='Binary'>
+                <label class='form-check-label' for='genderbinary'>
+                    Other
+                </label>
+                </div>
+                <h3>Lessons:</h3>
+                <select class="js-example-basic-multiple" name="lessons[]" multiple="multiple">
+            <?php
+            // Retrieve all lessons from the database
+            $lessons = getAllLessons();
+
+            // Display checkboxes for each lesson
+            foreach ($lessons as $lesson) {
+                echo '<option value="' . $lesson['id'] . '">' . $lesson['name'] .'</option>';
+            }
+            ?>
+                </select>
             </div>
-            <div class='form-check'>
-            <input class='form-check-input' type='radio' name='stugender' id='stugenderfemale"' value='Female'>
-            <label class='form-check-label' for='stugenderfemale'>
-                Female
-            </label>
             </div>
-            <div class='form-check disabled'>
-            <input class='form-check-input' type='radio' name='stugender' id='stugenderbinary' value='Binary'>
-            <label class='form-check-label' for='stugenderbinary'>
-                Binary
-            </label>
+        </fieldset>
+        <div class='form-group'>
+            <label for='image'>Profile image</label>
+            <input type='file' class='form-control-file' id='image' name='image'>
+        </div>
+        <div class='form-group row'>
+            <div class='col-sm-10'>
+            <button type='submit' class='btn btn-primary'>Submit</button>
             </div>
         </div>
-        </div>
-    </fieldset>
-    <div class='form-group'>
-        <label for='image'>Profile image</label>
-        <input type='file' class='form-control-file' id='stuimage' name='stuimage'>
-    </div>
-    <div class='form-group row'>
-        <div class='col-sm-10'>
-        <button type='submit' class='btn btn-primary'>Submit</button>
-        </div>
-    </div>
-  </form>
+    </form>
       </div>
     </div>
   </div>
@@ -344,11 +355,11 @@
             </div>
             <!-- <div class="profile ">
                 <div class="img ">
-                    <img src="https://i.postimg.cc/g2M32zcz/image.png " alt="studentImg ">
+                    <img src="https://i.postimg.cc/g2M32zcz/image.png " alt="Img ">
                 </div>
                 <div class="name_and_class ">
                     <p>Hermione Granger</p>
-                    <span>BCA Student</span>
+                    <span>BCA </span>
                 </div>
                 <div class="contact_info ">
                     <i class='bx bx-message-rounded-dots'></i>
@@ -357,15 +368,15 @@
                 </div>
                 <div class="about ">
                     <h4>About</h4>
-                    <p>BCA student studied at ABC School of Commerce and Computer studies. I really enjoy solving problems as well as making things pretty and easy to use. I can't stop learning new things; the more, the better.</p>
+                    <p>BCA  studied at ABC School of Commerce and Computer studies. I really enjoy solving problems as well as making things pretty and easy to use. I can't stop learning new things; the more, the better.</p>
                 </div>
                 <div class="other_info ">
-                    <div class="stuage ">
-                        <h4>stuage</h4>
+                    <div class="age ">
+                        <h4>age</h4>
                         <p>18</p>
                     </div>
-                    <div class="stugender ">
-                        <h4>stugender</h4>
+                    <div class="gender ">
+                        <h4>gender</h4>
                         <p>Female</p>
                     </div>
                     <div class="dob ">
@@ -377,11 +388,11 @@
                         <p>USA</p>
                     </div>
                 </div>
-                <div class="student_from_same_class ">
-                    <div class="student_same_class_heading ">
-                        <h4>Student from the same class</h4>
+                <div class="_from_same_class ">
+                    <div class="_same_class_heading ">
+                        <h4> from the same class</h4>
                     </div>
-                    <div class="student_same_class_img ">
+                    <div class="_same_class_img ">
                         <img src="https://i.postimg.cc/qBbpBPZB/img-2.jpg " alt="img ">
                         <img src="https://i.postimg.cc/BvPJ7FHN/img1.jpg " alt="img ">
                         <img src="https://i.postimg.cc/SRkqKt5t/img2.jpg " alt="img ">
@@ -393,9 +404,10 @@
             </div> -->
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
 </body>
 </html>

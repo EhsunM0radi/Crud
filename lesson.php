@@ -1,71 +1,39 @@
 <?php
-            $user = "root";
-            $pass = "";
-            $host = "localhost";
-            $dbname = "School";
-            try {
-                $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+    $user = "root";
+    $pass = "";
+    $host = "localhost";
+    $dbname = "School";
+    try {
+        $connection = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
+        $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch(PDOException $e) {
+        die("Error: " . $e->getMessage());
+    }
 
-                //Add lesson
-                // Prepare the SQL statement for insertion
-                if($_POST['addlesson']==='t'){
-                    $sql = "INSERT INTO Lesson (lessonname, lessonprerequisite, lessontype) VALUES (:lessonname, :lessonprerequisite, :lessontype)";
-                    $stmt = $conn->prepare($sql);
-                    $lessonname = $_POST['lessonname'];
-                    $lessonprerequisite = $_POST['lessonprerequisite'];
-                    $lessontype = $_POST['lessontype'];
+    include 'funcs.php';
 
-                    
-                    // Bind the parameter values
-                    $stmt->bindParam(':lessonname', $lessonname);
-                    $stmt->bindParam(':lessonprerequisite', $lessonprerequisite);
-                    $stmt->bindParam(':lessontype', $lessontype);
-                    
-                    // Execute the statement
-                    $stmt->execute();
-                    
-                    echo "lesson created successfully.";
-                    }
-                    
-                    //edit lesson
-                    if (isset($_POST['editlesson'])) {
-                        // Handle form submission
-                        $lesson_id = $_POST['editlesson'];
-                        $lessonname = $_POST['editlessonname'];
-                        $lessonprerequisite = $_POST['editlessonprerequisite'];
-                        $lessontype = $_POST['editlessontype'];
-                        var_dump($lesson_id);
-                        // Prepare the SQL statement for update
-                        $sql = "UPDATE Lesson SET lessonname = :lessonname, lessonprerequisite = :lessonprerequisite, lessontype = :lessontype WHERE lesson_id = :lesson_id";
-                        $stmt = $conn->prepare($sql);
+    if(isset($_POST['add'])){
+        $name = $_POST['name'];
+        $prerequisites = $_POST['prerequisites'];
+        $type = $_POST['type'];
+        $teachers = $_POST['teachers'];
+        createlesson($name,$prerequisites,$type,$teachers);
+    }
 
-                        // Bind the parameter values
-            
-                        $params = [':lessonname'=> $lessonname, ':lessonprerequisite'=>$lessonprerequisite,':lessontype'=>$lessontype,':lesson_id'=>$lesson_id];
-
-                        // Execute the statement
-                        $stmt->execute($params);
-
-                        echo "lesson updated successfully.";
-                    }
-                    
-                    //delete lesson
-                    // Prepare and execute the delete statement
-                    if (isset($_POST['deletelesson'])){
-                        $stmt = $conn->prepare("DELETE FROM Lesson WHERE lesson_id = :lesson_id");
-                        $stmt->bindParam(':lesson_id', $_POST['deletelesson']);
-                        $stmt->execute();
-                    // Check if any rows were affected
-                    if ($stmt->rowCount() > 0) {
-                        echo "lesson deleted successfully.";
-                    } else {
-                        echo "lesson not found.";
-                    }
-                }
-            } catch(PDOException $e) {
-                echo "Error: " . $e->getMessage();
-            }
+    if(isset($_POST['delete'])){
+        deleteLesson($_POST['delete']);
+    }
+    
+    if(isset($_POST['edit'])){
+        $id = $_POST['edit'];
+        $name = $_POST['name'];
+        $prerequisites = $_POST['prerequisites'];
+        $type = $_POST['type'];
+        $teachers = $_POST['teachers'];
+        updateLesson($id,$name,$prerequisites,$type,$teachers);
+    }
             $conn = null;
                 
 ?>
@@ -76,11 +44,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="main.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <title>School</title>
 </head>
 <body>
 <div class="container ">
-<?php
+        <?php
         include 'sidebar.php';
         ?>
         <div class="main_content">
@@ -88,7 +57,7 @@
                 <div class="hamburger">
                     <i class='bx bx-menu'></i>
                 </div>
-                <div class="lesson">
+                <div class="">
                     <div class="profile_img">
                         <img src="https://i.postimg.cc/Sxb6gssQ/img-1.jpg" alt="profile img">
                     </div>
@@ -123,9 +92,9 @@
             </div>
             <div class="tabs">
                 <!-- <div class="tab_name">
-                    <p><a href="index.php">lesson</a></p>
-                    <p><a href="lesson.php">lesson</a></p>
-                    <p><a href="lesson.php">Lesson</a></p>
+                    <p><a href="index.php"></a></p>
+                    <p><a href=".php"></a></p>
+                    <p><a href="teacher.php">teacher</a></p>
                 </div> -->
                 <div class="three_dots">
                     <i class='bx bx-dots-vertical-rounded'></i>
@@ -138,41 +107,64 @@
             $host = "localhost";
             $dbname = "School";
             try {
-                $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $connection = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
+                $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
                 
-                //read lesson
+                //read 
                 // Fetch lessons data
-                $sql = "SELECT * FROM Lesson";
-                $stmt = $conn->prepare($sql);
-                $stmt->execute();
-                $lessons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $lessons = getAlllessons();
+
 
                 if (count($lessons) > 0) {
                     echo "<table>";
-                    echo "<tr><th>name</th><th>id</th><th>prerequisite</th><th>type</th><th>edit</th></tr>";
+                    echo "<tr><th>name</th><th>id</th><th>prerequisites</th><th>type</th><th>teachers</th><th>edit</th></tr>";
 
                 foreach ($lessons as $lesson) {
+                    $lesson_teachers = getAllLessonTeacher($lesson['id']);
+                    $lessonsforlesson= getLessonsForLesson($lesson['id']);
+                    // die(var_dump($lessonsforlesson));
                     echo "<tr>";
-                    echo "<td class='profile_name'><img src='https://i.postimg.cc/BvPJ7FHN/img1.jpg' alt='img'>".$lesson['lessonname']."</td>";
-                    echo "<td>".$lesson['lesson_id']."</td>";
-                    echo "<td>".$lesson['lessonprerequisite']."</td>";
-                    echo "<td>".$lesson['lessontype']."</td>";
+                    echo "<td class='profile_name'><img src='https://i.postimg.cc/BvPJ7FHN/img1.jpg' alt='img'>".$lesson['name']."</td>";
+                    echo "<td>".$lesson['id']."</td>";
+                    echo "<td>";
+                    foreach($lessonsforlesson as $lesson_lesson){
+                        $sql3 = "SELECT * FROM Lesson WHERE id = :id";
+                        $stmt3 = $connection->prepare($sql3);
+                        $stmt3->bindParam(':id',$lesson_lesson['prerequisite']);
+                        $stmt3->execute();
+                        $getlessoninfo = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+                        // die(var_dump($getlessoninfo));
+                        echo $getlessoninfo[0]['name']."<br>";
+                    }
+                    echo "<del></td>";
+                    echo "<td>".$lesson['type']."</td>";
+                    echo '<td>';
+                    foreach($lesson_teachers as $lesson_teacher){
+                        $sql2 = "SELECT * FROM Teacher WHERE id = :id";
+                        $stmt2 = $connection->prepare($sql2);
+                        $stmt2->bindParam(':id',$lesson_teacher['teacher_id']);
+                        $stmt2->execute();
+                        $getteacherinfo = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+                        // die(var_dump($getteacherinfo));
+                        echo $getteacherinfo[0]['name']."<br>";
+                    }
+                      
+                    echo '<del></td>';
                     echo "<td><!-- Button trigger modal -->
-                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaledit".$lesson['lesson_id']."'>
+                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaledit".$lesson['id']."'>
                     Edit
                     </button> | 
                         <!-- Button trigger modal -->
-                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaldelete".$lesson['lesson_id']."'>
+                    <button type='submit' class='btn btn-primary' data-toggle='modal' data-target='#modaldelete".$lesson['id']."'>
                     Delete
                     </button>  
                     <!-- Modal -->
-                      <div class='modal fade' id='modaledit".$lesson['lesson_id']."' tabindex='-1' role='dialog' aria-labelledby='ModalEdit".$lesson['lesson_id']."' aria-hlesson_idden='true'>
+                      <div class='modal fade' id='modaledit".$lesson['id']."' tabindex='-1' role='dialog' aria-labelledby='ModalEdit".$lesson['id']."' aria-hidden='true'>
                         <div class='modal-dialog' role='document'>
                           <div class='modal-content'>
                             <div class='modal-header'>
-                              <h5 class='modal-title' id='ModalEdit".$lesson['lesson_id']."'>Edit</h5>
+                              <h5 class='modal-title' id='ModalEdit".$lesson['id']."'>Edit</h5>
                               <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
                                 <span aria-hidden='true'>&times;</span>
                               </button>
@@ -180,43 +172,71 @@
                             </div>
                             <div class='modal-body'>
                             <form method='post' action='".$_SERVER['PHP_SELF']."'>
-                            <input type='hidden' name='editlesson' value='".$lesson['lesson_id']."'>
+                            <input type='hidden' name='edit' value='".$lesson['id']."'>
                             <div class='form-group'>
-                              <label for='editlessonname".$lesson['lesson_id']."'>name</label>
-                              <input type='text' class='form-control' name='editlessonname' id='editlessonname".$lesson['lesson_id']."' placeholder='lessonname' value='".$lesson['lessonname']."'>
+                              <label for='editname".$lesson['id']."'>name</label>
+                              <input type='text' class='form-control' name='name' id='editname".$lesson['id']."' placeholder='name' value='".$lesson['name']."'>
                             </div>
                             <div class='form-group'>
-                              <label for='editlessonprerequisite".$lesson['lesson_id']."'>lessonprerequisite</label>
-                              <input type='text' class='form-control' name='editlessonprerequisite' id='editlessonprerequisite".$lesson['lesson_id']."' placeholder='lessonprerequisite' value='".$lesson['lessonprerequisite']."'>
+                              <label for='editprerequisites".$lesson['id']."'>prerequisites</label>
+                              <select class='js-example-basic-multiple' id='editprerequisites' name='prerequisites[]' multiple='multiple'>";
+                                  $allLessons = getAllLessons();
+                                  $allLessonsForLesson = getLessonsForLesson($lesson['id']);
+                                  foreach($allLessons as $_lesson){
+                                      echo "<option value='".$_lesson['id']."' ";
+                                      foreach($allLessonsForLesson as $lessonforlesson){
+                                        echo ((int)$lessonforlesson['prerequisite']===(int)$_lesson['id'])?"selected":"";
+                                      }
+                                      echo ">".$_lesson['name']."</option>";
+                                  }
+                          echo "</select>
                             </div>
                             <fieldset class='form-group'>
                                 <div class='row'>
-                                <legend class='col-form-label col-sm-2 pt-0'>lessontype</legend>
+                                <legend class='col-form-label col-sm-2 pt-0'>type</legend>
                                 <div class='col-sm-10'>
                                     <div class='form-check'>
-                                    <input class='form-check-input' type='radio' name='editlessontype' id='editlessontype2unit".$lesson['lesson_id']."' value='2unit' ".($lesson['lessontype']==='2unit'?'checked':'').">
-                                    <label class='form-check-label' for='editlessontype2unit".$lesson['lesson_id']."'>
-                                        2 unit
+                                    <input class='form-check-input' type='radio' name='type' id='edittype2unit".$lesson['id']."' value='2units' ".(($lesson['type']==='2units')?'checked':'').">
+                                    <label class='form-check-label' for='edittype2unit".$lesson['id']."'>
+                                        2 units
                                     </label>
                                     </div>
                                     <div class='form-check'>
-                                    <input class='form-check-input' type='radio' name='editlessontype' id='editlessontype3unit".$lesson['lesson_id']."' value='3unit' ".($lesson['lessontype']==='3unit'?'checked':'').">
-                                    <label class='form-check-label' for='editlessontype3unit".$lesson['lesson_id']."'>
-                                        3 unit
+                                    <input class='form-check-input' type='radio' name='type' id='edittype3unit".$lesson['id']."' value='3units' ".(($lesson['type']==='3units')?'checked':'').">
+                                    <label class='form-check-label' for='edittype3unit".$lesson['id']."'>
+                                        3 units
                                     </label>
                                     </div>
                                     <div class='form-check disabled'>
-                                    <input class='form-check-input' type='radio' name='editlessontype' id='editlessontype4unit".$lesson['lesson_id']."' value='4unit' ".($lesson['lessontype']==='4unit'?'checked':'').">
-                                    <label class='form-check-label' for='editlessontype4unit".$lesson['lesson_id']."'>
-                                        4 unit
+                                    <input class='form-check-input' type='radio' name='type' id='edittype4unit".$lesson['id']."' value='4units' ".(($lesson['type']==='4units')?'checked':'').">
+                                    <label class='form-check-label' for='edittype4unit".$lesson['id']."'>
+                                        4 units
                                     </label>
                                     </div>
+                                    <h3>teachers:</h3>
+                                    <select class='js-example-basic-multiple' name='teachers[]' multiple='multiple'>";
+                                    
+                                    // Retrieve all teachers from the database
+                    $teachers = getAllteachers();
+                    // Display checkboxes for each teacher
+                    foreach ($teachers as $teacher) {
+                        $lessonsforteacher = getLessonsForTeacher($teacher['id']);
+                        echo '<option value="' . $teacher['id'] . '" ';
+                        foreach ($lessonsforteacher as $lessonforteacher){
+                        // if($lessonforteacher['lesson_id']===$lesson['id']){
+                        echo (($lessonforteacher['lesson_id']===$lesson['id'])?"selected":"");
+                        // }
+                    }
+                        echo '>' . $teacher['name'];
+                    }    
+                                    
+                                echo "</select>
                                 </div>
                                 </div>
                             </fieldset>
                             <div class='form-group'>
                                 <label for='editimage'>Profile image</label>
-                                <input type='file' class='form-control-file' id='editimage".$lesson['lesson_id']."' name='editimage'>
+                                <input type='file' class='form-control-file' id='editimage".$lesson['id']."' name='editimage'>
                             </div>
                             <div class='form-group row'>
                                 <div class='col-sm-10'>
@@ -229,19 +249,19 @@
                         </div>
                       </div>
                       <!-- Modal -->
-                      <div class='modal fade' id='modaldelete".$lesson['lesson_id']."' tabindex='-1' role='dialog' aria-labelledby='ModalDelete".$lesson['lesson_id']."' aria-hlesson_idden='true'>
+                      <div class='modal fade' id='modaldelete".$lesson['id']."' tabindex='-1' role='dialog' aria-labelledby='ModalDelete".$lesson['id']."' aria-hidden='true'>
                         <div class='modal-dialog' role='document'>
                           <div class='modal-content'>
                             <div class='modal-header'>
-                              <h5 class='modal-title' id='ModalDelete".$lesson['lesson_id']."'>Modal title</h5>
+                              <h5 class='modal-title' id='ModalDelete".$lesson['id']."'>Modal title</h5>
                               <button type='button' class='close' data-dismiss='modal' aria-label='Close'>
                                 <span aria-hidden='true'>&times;</span>
                               </button>
                             </div>
                             <div class='modal-body'>
-                            <h6>Are you sure you want to delete this lesson?</h6>
+                            <h6>Are you sure you want to delete this ?</h6>
                             <form action='".$_SERVER['PHP_SELF']."' method='POST'>
-                                <input type='hidden' name='deletelesson' value='".$lesson['lesson_id']."' >
+                                <input type='hidden' name='delete' value='".$lesson['id']."' >
                                 <input type='submit' class='btn btn-primary'>
                             </form>
                             </div>
@@ -264,7 +284,7 @@
             </div>
             <!-- Button trigger modal -->
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modaladd">
-  Add lesson
+  Add 
 </button>
 
 <!-- Modal -->
@@ -272,7 +292,7 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="Modaladd">Add lesson </h5>
+        <h5 class="modal-title" id="Modaladd">Add  </h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -280,50 +300,70 @@
       <div class="modal-body">
         
       <form method='post' action='<?php echo $_SERVER['PHP_SELF'];?>'>
-    <input type='hidden' name='addlesson' value='t'>
-    <div class='form-group'>
-      <label for='lessonname'>name</label>
-      <input type='text' class='form-control' name='lessonname' id='lessonname' placeholder='lessonname'>
-    </div>
-    <div class='form-group'>
-      <label for='lessonprerequisite'>lessonprerequisite</label>
-      <input type='text' class='form-control' name='lessonprerequisite' id='lessonprerequisite' placeholder='lessonprerequisite'>
-    </div>
-    <fieldset class='form-group'>
-        <div class='row'>
-        <legend class='col-form-label col-sm-2 pt-0'>lessontype</legend>
-        <div class='col-sm-10'>
-            <div class='form-check'>
-            <input class='form-check-input' type='radio' name='lessontype' id='lessontype2unit' value='2unit'>
-            <label class='form-check-label' for='lessontype2unit'>
-                2 unit
-            </label>
+        <input type='hidden' name='add' value='t'>
+        <div class='form-group'>
+        <label for='name'>name</label>
+        <input type='text' class='form-control' name='name' id='name' placeholder='name'>
+        </div>
+        <div class='form-group'>
+        <label for='prerequisites'>prerequisites</label>
+        <select class="js-example-basic-multiple" id="prerequisites" name="prerequisites[]" multiple="multiple">
+            <?php
+                $allLessons = getAllLessons();
+                foreach($allLessons as $lesson){
+                    echo "<option value='".$lesson['id']."'>".$lesson['name']."</option>";
+                }
+
+            ?>
+        </select>
+        </div>
+        <fieldset class='form-group'>
+            <div class='row'>
+            <legend class='col-form-label col-sm-2 pt-0'>type</legend>
+            <div class='col-sm-10'>
+                <div class='form-check'>
+                <input class='form-check-input' type='radio' name='type' id='type2unit' value='2units'>
+                <label class='form-check-label' for='type2unit'>
+                    2 units
+                </label>
+                </div>
+                <div class='form-check'>
+                <input class='form-check-input' type='radio' name='type' id='type3unit"' value='3units'>
+                <label class='form-check-label' for='type3unit'>
+                    3 units
+                </label>
+                </div>
+                <div class='form-check disabled'>
+                <input class='form-check-input' type='radio' name='type' id='type4unit' value='4units'>
+                <label class='form-check-label' for='type4unit'>
+                    4 units
+                </label>
+                </div>
+                <h3>teachers:</h3>
+                <select class='js-example-basic-multiple' name='teachers[]' multiple='multiple'>
+            <?php
+            // Retrieve all teachers from the database
+            $teachers = getAllteachers();
+
+            // Display checkboxes for each teacher
+            foreach ($teachers as $teacher) {
+                echo '<option " value="' . $teacher['id'] . '">' . $teacher['name'];
+            }
+            ?>
+                </select>
             </div>
-            <div class='form-check'>
-            <input class='form-check-input' type='radio' name='lessontype' id='lessontype3unit"' value='3unit'>
-            <label class='form-check-label' for='lessontype3unit'>
-                3 unit
-            </label>
             </div>
-            <div class='form-check disabled'>
-            <input class='form-check-input' type='radio' name='lessontype' id='lessontype4unit' value='4unit'>
-            <label class='form-check-label' for='lessontype4unit'>
-                4 unit
-            </label>
+        </fieldset>
+        <div class='form-group'>
+            <label for='image'>Profile image</label>
+            <input type='file' class='form-control-file' id='image' name='image'>
+        </div>
+        <div class='form-group row'>
+            <div class='col-sm-10'>
+            <button type='submit' class='btn btn-primary'>Submit</button>
             </div>
         </div>
-        </div>
-    </fieldset>
-    <div class='form-group'>
-        <label for='image'>Profile image</label>
-        <input type='file' class='form-control-file' id='lessonimage' name='lessonimage'>
-    </div>
-    <div class='form-group row'>
-        <div class='col-sm-10'>
-        <button type='submit' class='btn btn-primary'>Submit</button>
-        </div>
-    </div>
-  </form>
+    </form>
       </div>
     </div>
   </div>
@@ -344,11 +384,11 @@
             </div>
             <!-- <div class="profile ">
                 <div class="img ">
-                    <img src="https://i.postimg.cc/g2M32zcz/image.png " alt="lessonImg ">
+                    <img src="https://i.postimg.cc/g2M32zcz/image.png " alt="Img ">
                 </div>
                 <div class="name_and_class ">
                     <p>Hermione Granger</p>
-                    <span>BCA lesson</span>
+                    <span>BCA </span>
                 </div>
                 <div class="contact_info ">
                     <i class='bx bx-message-rounded-dots'></i>
@@ -357,15 +397,15 @@
                 </div>
                 <div class="about ">
                     <h4>About</h4>
-                    <p>BCA lesson studied at ABC School of Commerce and Computer studies. I really enjoy solving problems as well as making things pretty and easy to use. I can't stop learning new things; the more, the better.</p>
+                    <p>BCA  studied at ABC School of Commerce and Computer studies. I really enjoy solving problems as well as making things pretty and easy to use. I can't stop learning new things; the more, the better.</p>
                 </div>
                 <div class="other_info ">
-                    <div class="lessonprerequisite ">
-                        <h4>lessonprerequisite</h4>
+                    <div class="prerequisites ">
+                        <h4>prerequisites</h4>
                         <p>18</p>
                     </div>
-                    <div class="lessontype ">
-                        <h4>lessontype</h4>
+                    <div class="type ">
+                        <h4>type</h4>
                         <p>3unit</p>
                     </div>
                     <div class="dob ">
@@ -377,11 +417,11 @@
                         <p>USA</p>
                     </div>
                 </div>
-                <div class="lesson_from_same_class ">
-                    <div class="lesson_same_class_heading ">
-                        <h4>lesson from the same class</h4>
+                <div class="_from_same_class ">
+                    <div class="_same_class_heading ">
+                        <h4> from the same class</h4>
                     </div>
-                    <div class="lesson_same_class_img ">
+                    <div class="_same_class_img ">
                         <img src="https://i.postimg.cc/qBbpBPZB/img-2.jpg " alt="img ">
                         <img src="https://i.postimg.cc/BvPJ7FHN/img1.jpg " alt="img ">
                         <img src="https://i.postimg.cc/SRkqKt5t/img2.jpg " alt="img ">
@@ -393,9 +433,10 @@
             </div> -->
         </div>
     </div>
-    <script src="script.js"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </body>
 </html>
